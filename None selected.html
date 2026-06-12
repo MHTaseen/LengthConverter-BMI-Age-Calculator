@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #eeede9;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #9b9b96;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --radius: 10px;
+    --radius-lg: 14px;
+    --accent: #1a1a18;
+    --info-bg: #e6f1fb;
+    --info-text: #0c447c;
+    --danger-bg: #fcebeb;
+    --danger-text: #a32d2d;
+    --success-bg: #eaf3de;
+    --success-text: #3b6d11;
+    --warn-bg: #faeeda;
+    --warn-text: #854f0b;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c;
+      --bg2: #2a2a28;
+      --bg3: #333330;
+      --text: #f0efe9;
+      --text2: #a0a09a;
+      --text3: #6a6a64;
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.22);
+      --info-bg: #0c2a42;
+      --info-text: #85b7eb;
+      --danger-bg: #3d1414;
+      --danger-text: #f09595;
+      --success-bg: #1a2d0a;
+      --success-text: #97c459;
+      --warn-bg: #3a2004;
+      --warn-text: #ef9f27;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.3px;
+  }
+
+  h1 span { color: var(--text2); font-weight: 400; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1.25rem;
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 4px;
+    border: 0.5px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--text2);
+    border-radius: 7px;
+    transition: all .18s;
+    font-family: inherit;
+  }
+
+  .tab.active {
+    background: var(--bg);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  label {
+    font-size: 13px;
+    color: var(--text2);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 9px 12px;
+    font-size: 15px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    appearance: auto;
+    transition: border-color .15s, box-shadow .15s;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--info-bg);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 1rem;
+  }
+
+  .swap-btn {
+    padding: 9px 14px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg2);
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text2);
+    transition: all .15s;
+    line-height: 1;
+    font-family: inherit;
+  }
+
+  .swap-btn:hover { background: var(--bg3); color: var(--text); }
+
+  .result-box {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 0.5px solid var(--border);
+  }
+
+  .result-val { font-size: 22px; font-weight: 600; word-break: break-all; }
+  .result-unit { font-size: 14px; color: var(--text2); }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: .75rem;
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
+    margin-bottom: 1rem;
+  }
+
+  .cat-btn {
+    padding: 8px 6px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    transition: all .15s;
+    text-align: center;
+    font-family: inherit;
+  }
+
+  .cat-btn.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  .cat-btn:hover:not(.active) {
+    background: var(--bg2);
+    color: var(--text);
+    border-color: var(--border2);
+  }
+
+  /* BMI */
+  .toggle-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 9px 12px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg2);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    font-family: inherit;
+    transition: all .15s;
+  }
+
+  .toggle-btn.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .bmi-score {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: .75rem;
+    flex-wrap: wrap;
+  }
+
+  .bmi-num { font-size: 32px; font-weight: 700; }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .bmi-bar-wrap { margin: .75rem 0 .25rem; }
+
+  .bmi-bar {
+    position: relative;
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(to right, #378ADD 0%, #639922 28%, #EF9F27 60%, #D85A30 80%, #E24B4A 100%);
+    overflow: visible;
+  }
+
+  .bmi-needle {
+    position: absolute;
+    top: -5px;
+    width: 4px;
+    height: 20px;
+    background: var(--text);
+    border-radius: 2px;
+    transform: translateX(-50%);
+    transition: left .4s ease;
+  }
+
+  .bmi-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 6px;
+  }
+
+  .bmi-desc {
+    margin-top: 1rem;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: .875rem;
+    border: 0.5px solid var(--border);
+  }
+
+  /* AGE */
+  .age-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 1rem;
+  }
+
+  .age-card {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+    border: 0.5px solid var(--border);
+  }
+
+  .age-num { font-size: 28px; font-weight: 700; }
+  .age-lbl { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  .age-extra {
+    margin-top: 1rem;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.8;
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: .875rem;
+    border: 0.5px solid var(--border);
+  }
+
+  .age-extra strong { color: var(--text); }
+
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 480px) {
+    .cat-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+    .age-grid { grid-template-columns: repeat(3, 1fr); }
+    .row { grid-template-columns: 1fr auto 1fr; }
+    h1 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Universal Calculator <span>· converter, BMI & age</span></h1>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('conv')">⇄ Converter</button>
+    <button class="tab" onclick="switchTab('bmi')">♥ BMI</button>
+    <button class="tab" onclick="switchTab('age')">📅 Age</button>
+  </div>
+
+  <!-- UNIT CONVERTER -->
+  <div id="conv" class="panel active">
+    <p class="section-title">Category</p>
+    <div class="cat-grid" id="catGrid"></div>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>From</label>
+          <select id="fromUnit" onchange="convert()"></select>
+        </div>
+        <button class="swap-btn" onclick="swapUnits()" title="Swap units">⇄</button>
+        <div>
+          <label>To</label>
+          <select id="toUnit" onchange="convert()"></select>
+        </div>
+      </div>
+      <div>
+        <label>Value</label>
+        <input type="number" id="convInput" placeholder="Enter value" oninput="convert()" value="1">
+      </div>
+      <div class="result-box">
+        <span class="result-val" id="convResult">—</span>
+        <span class="result-unit" id="convResultUnit"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BMI -->
+  <div id="bmi" class="panel">
+    <div class="card">
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="bmi-metric" onclick="setBmiUnit('metric')">Metric (kg / cm)</button>
+        <button class="toggle-btn" id="bmi-imperial" onclick="setBmiUnit('imperial')">Imperial (lb / in)</button>
+      </div>
+      <div class="two-col">
+        <div>
+          <label id="weightLabel">Weight (kg)</label>
+          <input type="number" id="weightInp" placeholder="e.g. 70" oninput="calcBMI()">
+        </div>
+        <div>
+          <label id="heightLabel">Height (cm)</label>
+          <input type="number" id="heightInp" placeholder="e.g. 175" oninput="calcBMI()">
+        </div>
+      </div>
+      <div id="bmiResult" style="display:none; margin-top:1rem;">
+        <div class="bmi-score">
+          <span class="bmi-num" id="bmiVal"></span>
+          <span class="badge" id="bmiBadge"></span>
+        </div>
+        <div class="bmi-bar-wrap">
+          <div class="bmi-bar"><div class="bmi-needle" id="bmiNeedle"></div></div>
+          <div class="bmi-scale">
+            <span>15</span><span>Underweight</span><span>Normal</span><span>Overweight</span><span>Obese</span><span>40+</span>
+          </div>
+        </div>
+        <div class="bmi-desc" id="bmiDesc"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AGE -->
+  <div id="age" class="panel">
+    <div class="card">
+      <div class="two-col">
+        <div>
+          <label>Date of birth</label>
+          <input type="date" id="dobInp" onchange="calcAge()">
+        </div>
+        <div>
+          <label>As of date</label>
+          <input type="date" id="asofInp" onchange="calcAge()">
+        </div>
+      </div>
+      <div id="ageResult" style="display:none;">
+        <div class="age-grid">
+          <div class="age-card"><div class="age-num" id="ageYears">—</div><div class="age-lbl">Years</div></div>
+          <div class="age-card"><div class="age-num" id="ageMonths">—</div><div class="age-lbl">Months</div></div>
+          <div class="age-card"><div class="age-num" id="ageDays">—</div><div class="age-lbl">Days</div></div>
+        </div>
+        <div class="age-extra" id="ageExtra"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Works offline · no data sent anywhere</footer>
+</div>
+
+<script>
+const CATS = {
+  Length:      { km:1000, m:1, cm:0.01, mm:0.001, mi:1609.344, yd:0.9144, ft:0.3048, in:0.0254, nmi:1852, 'μm':1e-6, nm:1e-9 },
+  Mass:        { t:1000, kg:1, g:0.001, mg:1e-6, lb:0.45359237, oz:0.028349523, st:6.35029, ct:0.0002, grain:6.4799e-5, 'μg':1e-9 },
+  Temperature: null,
+  Time:        { y:31536000, mo:2592000, wk:604800, d:86400, h:3600, min:60, s:1, ms:0.001, 'μs':1e-6, ns:1e-9 },
+  Speed:       { 'km/h':1/3.6, 'm/s':1, 'mi/h':0.44704, 'ft/s':0.3048, kn:0.51444 },
+  Area:        { 'km²':1e6, 'm²':1, 'cm²':1e-4, 'mm²':1e-6, 'mi²':2589988, 'yd²':0.836127, 'ft²':0.092903, 'in²':6.4516e-4, ha:10000, ac:4046.856 },
+  Volume:      { 'm³':1000, L:1, 'cm³':0.001, 'mm³':1e-6, 'ft³':28.3168, 'in³':0.016387, gal:3.78541, qt:0.946353, pt:0.473176, cup:0.236588, 'fl oz':0.029574, ml:0.001, 'μl':1e-6 },
+  Pressure:    { Pa:1, kPa:1000, MPa:1e6, bar:100000, psi:6894.757, atm:101325, torr:133.322, mmHg:133.322 },
+  Energy:      { J:1, kJ:1000, MJ:1e6, cal:4.184, kcal:4184, 'Wh':3600, 'kWh':3600000, BTU:1055.056, eV:1.602e-19 },
+  Power:       { W:1, kW:1000, MW:1e6, hp:745.7, 'BTU/h':0.29307, 'cal/s':4.184 },
+  Data:        { b:1, B:8, KB:8192, MB:8388608, GB:8589934592, TB:8796093022208, Kb:1000, Mb:1e6, Gb:1e9, Tb:1e12 },
+  Angle:       { '°':1, deg:1, rad:180/Math.PI, grad:0.9, arcmin:1/60, arcsec:1/3600 },
+  Fuel:        { 'km/L':1, 'L/100km':null, 'mpg(US)':0.425144, 'mpg(UK)':0.354006 },
+  Currency:    null,
+};
+
+let activeCat = 'Length';
+let bmiUnit = 'metric';
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['conv','bmi','age'][i] === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === id));
+}
+
+function buildCats() {
+  const g = document.getElementById('catGrid');
+  g.innerHTML = '';
+  Object.keys(CATS).filter(c => c !== 'Currency').forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'cat-btn' + (c === activeCat ? ' active' : '');
+    b.textContent = c;
+    b.onclick = () => setCat(c);
+    g.appendChild(b);
+  });
+}
+
+function setCat(c) {
+  activeCat = c;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.textContent === c));
+  populateUnits();
+  convert();
+}
+
+function getUnits() {
+  if (activeCat === 'Temperature') return ['°C', '°F', 'K'];
+  return Object.keys(CATS[activeCat] || {});
+}
+
+function populateUnits() {
+  const units = getUnits();
+  const prev = [document.getElementById('fromUnit').value, document.getElementById('toUnit').value];
+  ['fromUnit','toUnit'].forEach((id, i) => {
+    const s = document.getElementById(id);
+    s.innerHTML = units.map(u => `<option value="${u}">${u}</option>`).join('');
+    if (units.includes(prev[i])) s.value = prev[i];
+    else s.selectedIndex = i === 0 ? 0 : Math.min(1, units.length - 1);
+  });
+}
+
+function toBaseSI(val, unit) {
+  if (activeCat === 'Temperature') {
+    if (unit === '°C') return val;
+    if (unit === '°F') return (val - 32) * 5 / 9;
+    if (unit === 'K')  return val - 273.15;
+  }
+  if (activeCat === 'Fuel') {
+    if (unit === 'km/L') return val;
+    if (unit === 'L/100km') return val === 0 ? Infinity : 100 / val;
+    return val * CATS.Fuel[unit];
+  }
+  return val * CATS[activeCat][unit];
+}
+
+function fromBaseSI(val, unit) {
+  if (activeCat === 'Temperature') {
+    if (unit === '°C') return val;
+    if (unit === '°F') return val * 9 / 5 + 32;
+    if (unit === 'K')  return val + 273.15;
+  }
+  if (activeCat === 'Fuel') {
+    if (unit === 'km/L') return val;
+    if (unit === 'L/100km') return val === 0 ? Infinity : 100 / val;
+    return val / CATS.Fuel[unit];
+  }
+  return val / CATS[activeCat][unit];
+}
+
+function convert() {
+  const inp = parseFloat(document.getElementById('convInput').value);
+  const from = document.getElementById('fromUnit').value;
+  const to = document.getElementById('toUnit').value;
+  const resEl = document.getElementById('convResult');
+  const unitEl = document.getElementById('convResultUnit');
+  if (isNaN(inp)) { resEl.textContent = '—'; unitEl.textContent = ''; return; }
+  const base = toBaseSI(inp, from);
+  const out = fromBaseSI(base, to);
+  const disp = Math.abs(out) >= 1e-4 && Math.abs(out) < 1e10
+    ? parseFloat(out.toPrecision(8))
+    : out.toExponential(5);
+  resEl.textContent = isFinite(disp) ? disp : '∞';
+  unitEl.textContent = to;
+}
+
+function swapUnits() {
+  const f = document.getElementById('fromUnit');
+  const t = document.getElementById('toUnit');
+  const tmp = f.value; f.value = t.value; t.value = tmp;
+  convert();
+}
+
+// BMI
+function setBmiUnit(u) {
+  bmiUnit = u;
+  document.getElementById('bmi-metric').classList.toggle('active', u === 'metric');
+  document.getElementById('bmi-imperial').classList.toggle('active', u === 'imperial');
+  document.getElementById('weightLabel').textContent = u === 'metric' ? 'Weight (kg)' : 'Weight (lb)';
+  document.getElementById('heightLabel').textContent = u === 'metric' ? 'Height (cm)' : 'Height (in)';
+  document.getElementById('weightInp').placeholder = u === 'metric' ? 'e.g. 70' : 'e.g. 154';
+  document.getElementById('heightInp').placeholder = u === 'metric' ? 'e.g. 175' : 'e.g. 69';
+  calcBMI();
+}
+
+function calcBMI() {
+  let w = parseFloat(document.getElementById('weightInp').value);
+  let h = parseFloat(document.getElementById('heightInp').value);
+  const box = document.getElementById('bmiResult');
+  if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) { box.style.display = 'none'; return; }
+  let bmi = bmiUnit === 'metric' ? w / ((h / 100) ** 2) : (w / (h * h)) * 703;
+  bmi = Math.round(bmi * 10) / 10;
+
+  let cat, bg, fg, desc;
+  if (bmi < 18.5) {
+    cat = 'Underweight'; bg = '#e6f1fb'; fg = '#0c447c';
+    desc = 'BMI below 18.5 is considered underweight. Consider consulting a healthcare provider about balanced nutrition and safe weight gain strategies.';
+  } else if (bmi < 25) {
+    cat = 'Normal weight'; bg = '#eaf3de'; fg = '#3b6d11';
+    desc = 'BMI 18.5–24.9 is the healthy range. Maintain it through a balanced diet and regular physical activity — you\'re doing well!';
+  } else if (bmi < 30) {
+    cat = 'Overweight'; bg = '#faeeda'; fg = '#854f0b';
+    desc = 'BMI 25–29.9 is overweight. Modest lifestyle changes such as portion control and moderate exercise can meaningfully reduce health risks.';
+  } else {
+    cat = 'Obese'; bg = '#fcebeb'; fg = '#a32d2d';
+    desc = 'BMI 30+ is classified as obese. A healthcare professional can help you build a safe and sustainable weight management plan.';
+  }
+
+  const pct = Math.min(100, Math.max(0, ((bmi - 15) / 25) * 100));
+  document.getElementById('bmiVal').textContent = bmi;
+  const badge = document.getElementById('bmiBadge');
+  badge.textContent = cat;
+  badge.style.background = bg; badge.style.color = fg;
+  document.getElementById('bmiNeedle').style.left = pct + '%';
+  document.getElementById('bmiDesc').textContent = desc;
+  box.style.display = 'block';
+}
+
+// AGE
+function calcAge() {
+  const dob = new Date(document.getElementById('dobInp').value);
+  const asof = new Date(document.getElementById('asofInp').value);
+  const box = document.getElementById('ageResult');
+  if (isNaN(dob) || isNaN(asof) || dob >= asof) { box.style.display = 'none'; return; }
+
+  let y = asof.getFullYear() - dob.getFullYear();
+  let mo = asof.getMonth() - dob.getMonth();
+  let d = asof.getDate() - dob.getDate();
+  if (d < 0) { mo--; d += new Date(asof.getFullYear(), asof.getMonth(), 0).getDate(); }
+  if (mo < 0) { y--; mo += 12; }
+
+  const totalDays = Math.floor((asof - dob) / 86400000);
+  const totalWeeks = Math.floor(totalDays / 7);
+  const totalMonths = y * 12 + mo;
+  const totalHours = totalDays * 24;
+
+  const nextBday = new Date(asof.getFullYear(), dob.getMonth(), dob.getDate());
+  if (nextBday <= asof) nextBday.setFullYear(asof.getFullYear() + 1);
+  const daysToNext = Math.floor((nextBday - asof) / 86400000);
+
+  document.getElementById('ageYears').textContent = y;
+  document.getElementById('ageMonths').textContent = mo;
+  document.getElementById('ageDays').textContent = d;
+  document.getElementById('ageExtra').innerHTML =
+    `<strong>${totalDays.toLocaleString()}</strong> total days &nbsp;·&nbsp; ` +
+    `<strong>${totalWeeks.toLocaleString()}</strong> weeks &nbsp;·&nbsp; ` +
+    `<strong>${totalMonths}</strong> months<br>` +
+    `<strong>${totalHours.toLocaleString()}</strong> hours lived<br>` +
+    `Next birthday in <strong>${daysToNext}</strong> day${daysToNext !== 1 ? 's' : ''} ` +
+    `<span style="color:var(--text3)">(${nextBday.toDateString()})</span>`;
+  box.style.display = 'block';
+}
+
+// Init
+document.getElementById('asofInp').value = new Date().toISOString().slice(0, 10);
+buildCats();
+populateUnits();
+convert();
+</script>
+</body>
+</html>
+calculator.html
+Displaying calculator.html.
